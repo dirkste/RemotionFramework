@@ -109,9 +109,13 @@ def write_props_file(props: dict) -> None:
 # ---------------------------------------------------------------------------
 # Launch Remotion Studio (browser preview — no MP4 export)
 # ---------------------------------------------------------------------------
-def launch_studio() -> None:
-    cmd = ["npx", "remotion", "studio"]
-    print("[Launching Remotion Studio] Component will poll /public/props.json every 2s\n")
+def launch_studio(duration_in_frames: int) -> None:
+    # durationInFrames must be passed via --props so Remotion's calculateMetadata
+    # can set the composition timeline length. It cannot be updated from inside a
+    # component — ballColor and ballSize are handled via the props.json hot-reload.
+    props_json = json.dumps({"durationInFrames": duration_in_frames})
+    cmd = ["npx", "remotion", "studio", "--props", props_json]
+    print(f"[Launching Remotion Studio] durationInFrames={duration_in_frames}, ballColor/ballSize via props.json poll\n")
     subprocess.run(cmd, cwd=os.path.abspath(VIDEO_ENGINE_DIR), check=True, shell=True)
 
 
@@ -136,7 +140,7 @@ def main() -> None:
     print("[Validation passed]\n")
 
     write_props_file(props)
-    launch_studio()
+    launch_studio(duration_in_frames)
 
 
 if __name__ == "__main__":
