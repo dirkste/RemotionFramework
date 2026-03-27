@@ -6,13 +6,12 @@ import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 const GRAVITY = 1.5; // px/frame²
 const ELASTICITY = 0.75; // velocity multiplier on floor collision
 const FLOOR_Y = 1080; // canvas height in px
-const TOTAL_FRAMES = 90;
 
 export const BouncingBall: React.FC<BouncingBallProps> = ({
   ballColor,
   ballSize,
 }) => {
-  const { width } = useVideoConfig();
+  const { width, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
   const radius = ballSize / 2;
 
@@ -23,7 +22,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
     let y = radius; // start with ball resting on the "ceiling" edge
     let vy = 0;
 
-    for (let f = 0; f < TOTAL_FRAMES; f++) {
+    for (let f = 0; f < durationInFrames; f++) {
       vy += GRAVITY;
       y += vy;
 
@@ -37,10 +36,10 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
       positions.push(y);
     }
     return positions;
-  }, [radius]);
+  }, [radius, durationInFrames]);
 
   const centerX = width / 2;
-  const centerY = trajectory[frame] ?? trajectory[TOTAL_FRAMES - 1];
+  const centerY = trajectory[frame] ?? trajectory[durationInFrames - 1];
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#FFFFFF" }}>

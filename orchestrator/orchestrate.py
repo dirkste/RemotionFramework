@@ -1,8 +1,9 @@
 """
 orchestrate.py — Phase 0: Bouncing Ball
 
-Calls claude-haiku to generate a Visual Intent JSON (ballColor + ballSize),
-validates the output, then opens Remotion Studio in the browser for preview.
+Reads intent_config.json for videoLengthSeconds, calls claude-haiku to generate
+a Visual Intent JSON (ballColor + ballSize), merges in durationInFrames, validates,
+then opens Remotion Studio in the browser for preview.
 """
 
 import json
@@ -18,6 +19,9 @@ import anthropic
 BALL_SIZE_MIN = 100
 BALL_SIZE_MAX = 800
 HEX_COLOR_PATTERN = r"^#[0-9A-Fa-f]{6}$"
+FPS = 30
+
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "intent_config.json")
 
 SYSTEM_PROMPT = (
     "You are a creative director generating visual parameters for an animation. "
@@ -29,6 +33,14 @@ SYSTEM_PROMPT = (
 )
 
 VIDEO_ENGINE_DIR = os.path.join(os.path.dirname(__file__), "..", "video-engine")
+
+
+# ---------------------------------------------------------------------------
+# Config
+# ---------------------------------------------------------------------------
+def load_config() -> dict:
+    with open(CONFIG_PATH) as f:
+        return json.load(f)
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +101,13 @@ def main() -> None:
         print("ERROR: ANTHROPIC_API_KEY environment variable is not set.", file=sys.stderr)
         sys.exit(1)
 
+    config = load_config()
+    video_length_seconds = config["videoLengthSeconds"]
+    duration_in_frames = int(video_length_seconds * FPS)
+    print(f"[Config] videoLengthSeconds={video_length_seconds} → durationInFrames={duration_in_frames}\n")
+
     props = generate_intent()
+    props["durationInFrames"] = duration_in_frames
     print(f"[Generated intent]\n{json.dumps(props, indent=2)}\n")
 
     validate_intent(props)

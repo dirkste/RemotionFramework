@@ -8,6 +8,10 @@ export const BouncingBallSchema = z.object({
     .number()
     .min(100, "ballSize must be at least 100")
     .max(800, "ballSize must not exceed 800"),
+  durationInFrames: z
+    .number()
+    .int("durationInFrames must be an integer")
+    .min(1, "durationInFrames must be at least 1"),
 });
 
 export type BouncingBallProps = z.infer<typeof BouncingBallSchema>;
