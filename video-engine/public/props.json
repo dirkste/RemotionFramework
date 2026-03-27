@@ -1,5 +1,5 @@
 {
-  "ballColor": "#FF0000",
-  "ballSize": 100,
-  "durationInFrames": 90
+  "ballColor": "#E91E63",
+  "ballSize": 250,
+  "durationInFrames": 450
 }

@@ -112,7 +112,7 @@ def write_props_file(props: dict) -> None:
 def launch_studio() -> None:
     cmd = ["npx", "remotion", "studio"]
     print("[Launching Remotion Studio] Component will poll /public/props.json every 2s\n")
-    subprocess.run(cmd, cwd=os.path.abspath(VIDEO_ENGINE_DIR), check=True)
+    subprocess.run(cmd, cwd=os.path.abspath(VIDEO_ENGINE_DIR), check=True, shell=True)
 
 
 # ---------------------------------------------------------------------------
