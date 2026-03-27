@@ -63,6 +63,17 @@ def generate_intent() -> dict:
     )
     raw = message.content[0].text.strip()
     print(f"[LLM raw output]\n{raw}\n")
+
+    # Strip markdown code fences the model sometimes adds (```json ... ```)
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+        raw = raw.strip()
+
+    if not raw:
+        raise ValueError("LLM returned an empty response — retry or check your API key.")
+
     return json.loads(raw)
 
 
