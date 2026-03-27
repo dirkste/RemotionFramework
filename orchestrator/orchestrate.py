@@ -3,7 +3,8 @@ orchestrate.py — Phase 0: Bouncing Ball
 
 Reads intent_config.json for videoLengthSeconds, calls claude-haiku to generate
 a Visual Intent JSON (ballColor + ballSize), merges in durationInFrames, validates,
-then opens Remotion Studio in the browser for preview.
+writes props to video-engine/public/props.json, then opens Remotion Studio.
+The component polls /public/props.json every 2s and hot-reloads ballColor + ballSize.
 """
 
 import json
@@ -33,6 +34,7 @@ SYSTEM_PROMPT = (
 )
 
 VIDEO_ENGINE_DIR = os.path.join(os.path.dirname(__file__), "..", "video-engine")
+PROPS_FILE = os.path.join(VIDEO_ENGINE_DIR, "public", "props.json")
 
 
 # ---------------------------------------------------------------------------
@@ -84,12 +86,21 @@ def validate_intent(props: dict) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Write props to public/props.json (hot-reload source for the component)
+# ---------------------------------------------------------------------------
+def write_props_file(props: dict) -> None:
+    dest = os.path.abspath(PROPS_FILE)
+    with open(dest, "w") as f:
+        json.dump(props, f, indent=2)
+    print(f"[Props written] {dest}\n")
+
+
+# ---------------------------------------------------------------------------
 # Launch Remotion Studio (browser preview — no MP4 export)
 # ---------------------------------------------------------------------------
-def launch_studio(props: dict) -> None:
-    props_json = json.dumps(props)
-    cmd = ["npx", "remotion", "studio", "--props", props_json]
-    print(f"[Launching Remotion Studio]\nProps: {props_json}\n")
+def launch_studio() -> None:
+    cmd = ["npx", "remotion", "studio"]
+    print("[Launching Remotion Studio] Component will poll /public/props.json every 2s\n")
     subprocess.run(cmd, cwd=os.path.abspath(VIDEO_ENGINE_DIR), check=True)
 
 
@@ -113,7 +124,8 @@ def main() -> None:
     validate_intent(props)
     print("[Validation passed]\n")
 
-    launch_studio(props)
+    write_props_file(props)
+    launch_studio()
 
 
 if __name__ == "__main__":
