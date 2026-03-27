@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import { staticFile } from "remotion";
 import { BouncingBall } from "../components/BouncingBall";
 import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 
 type LiveProps = Pick<BouncingBallProps, "ballColor" | "ballSize">;
 
 const POLL_INTERVAL_MS = 2000;
-const PROPS_URL = "/public/props.json";
+const PROPS_URL = staticFile("props.json");
 
 export const BouncingBallComposition: React.FC<BouncingBallProps> = (schemaProps) => {
   const [liveProps, setLiveProps] = useState<LiveProps>({
