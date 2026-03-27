@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { staticFile } from "remotion";
+import { staticFile, watchStaticFile } from "remotion";
 import { BouncingBall } from "../components/BouncingBall";
 import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 
 type LiveProps = Pick<BouncingBallProps, "ballColor" | "ballSize">;
 
-const POLL_INTERVAL_MS = 2000;
-const PROPS_URL = staticFile("props.json");
+async function loadPropsFile(): Promise<Partial<LiveProps>> {
+  const res = await fetch(`${staticFile("props.json")}?t=${Date.now()}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
 
 export const BouncingBallComposition: React.FC<BouncingBallProps> = (schemaProps) => {
   const [liveProps, setLiveProps] = useState<LiveProps>({
@@ -15,31 +18,28 @@ export const BouncingBallComposition: React.FC<BouncingBallProps> = (schemaProps
   });
 
   useEffect(() => {
-    const fetchProps = async () => {
+    const applyProps = async () => {
       try {
-        const res = await fetch(`${PROPS_URL}?t=${Date.now()}`);
-        if (!res.ok) {
-          console.warn(`[BouncingBall] props.json fetch failed: HTTP ${res.status} ${res.url}`);
-          return;
-        }
-        const data = await res.json();
+        const data = await loadPropsFile();
         console.log("[BouncingBall] props loaded:", data);
         setLiveProps({
           ballColor: data.ballColor ?? schemaProps.ballColor,
           ballSize: data.ballSize ?? schemaProps.ballSize,
         });
       } catch (err) {
-        console.error("[BouncingBall] props.json fetch error:", err);
+        console.error("[BouncingBall] failed to load props.json:", err);
       }
     };
 
-    fetchProps();
-    const id = setInterval(fetchProps, POLL_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally runs once on mount
+    // Initial load
+    applyProps();
 
-  // durationInFrames is intentionally not hot-reloaded here:
-  // Remotion's calculateMetadata (and therefore the timeline length) is set
-  // at composition launch time and cannot be changed from inside a component.
+    // watchStaticFile is Remotion's own file-watcher — it triggers a proper
+    // composition re-render in Studio whenever the file changes on disk,
+    // which is more reliable than polling with setInterval + setState.
+    const { cancel } = watchStaticFile("props.json", applyProps);
+    return cancel;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return <BouncingBall {...schemaProps} {...liveProps} />;
 };
