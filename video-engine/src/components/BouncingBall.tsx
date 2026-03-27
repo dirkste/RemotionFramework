@@ -58,7 +58,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
           strokeWidth={2}
         />
         {/* Ball */}
-        <circle cx={centerX} cy={centerY} r={radius} fill={ballColor} />
+        <circle cx={centerX} cy={centerY} r={radius} style={{ fill: ballColor }} />
       </svg>
     </AbsoluteFill>
   );
