@@ -3,13 +3,16 @@ import { useMemo } from "react";
 import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 
 // Physics constants — hard-coded to guarantee a "Perfect Bounce"
-const GRAVITY = 1.5; // px/frame²
-const ELASTICITY = 0.75; // velocity multiplier on floor collision
-const FLOOR_Y = 1080; // canvas height in px
+const GRAVITY = 1.5;               // px/frame²
+const ELASTICITY = 0.75;           // velocity multiplier on floor collision
+const FLOOR_Y = 1080;              // canvas height in px
+const MAX_HORIZONTAL_VELOCITY = 8; // px/frame at horizontalDrift=1
 
 export const BouncingBall: React.FC<BouncingBallProps> = ({
   ballColor,
   ballSize,
+  backgroundColor,
+  horizontalDrift,
 }) => {
   const { width, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
@@ -18,36 +21,44 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
   // Precompute the full trajectory so frames can be rendered out of order.
   // Remotion renders frames independently — stateful/iterative simulation breaks.
   const trajectory = useMemo(() => {
-    const positions: number[] = [];
-    let y = radius; // start with ball resting on the "ceiling" edge
+    const positions: { x: number; y: number }[] = [];
+    let y = radius;
     let vy = 0;
+    let x = width / 2;
+    let vx = horizontalDrift * MAX_HORIZONTAL_VELOCITY; // start drifting right
 
     for (let f = 0; f < durationInFrames; f++) {
       vy += GRAVITY;
       y += vy;
+      x += vx;
 
-      // Floor collision: ball bottom = y + radius; cap at floor
+      // Floor collision: reverse vertical velocity, alternate horizontal direction
       const maxY = FLOOR_Y - radius;
       if (y >= maxY) {
         y = maxY;
         vy = -Math.abs(vy) * ELASTICITY;
+        vx = -vx;
       }
 
-      positions.push(y);
+      // Wall clamping: keep ball within canvas bounds
+      if (x < radius) {
+        x = radius;
+        vx = Math.abs(vx);
+      } else if (x > width - radius) {
+        x = width - radius;
+        vx = -Math.abs(vx);
+      }
+
+      positions.push({ x, y });
     }
     return positions;
-  }, [radius, durationInFrames]);
+  }, [radius, durationInFrames, horizontalDrift, width]);
 
-  const centerX = width / 2;
-  const centerY = trajectory[frame] ?? trajectory[durationInFrames - 1];
+  const pos = trajectory[frame] ?? trajectory[durationInFrames - 1];
 
   return (
-    <AbsoluteFill style={{ backgroundColor: "#FFFFFF" }}>
-      <svg
-        width={width}
-        height={FLOOR_Y}
-        style={{ display: "block" }}
-      >
+    <AbsoluteFill style={{ backgroundColor }}>
+      <svg width={width} height={FLOOR_Y} style={{ display: "block" }}>
         {/* Floor line */}
         <line
           x1={0}
@@ -58,7 +69,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
           strokeWidth={2}
         />
         {/* Ball */}
-        <circle cx={centerX} cy={centerY} r={radius} style={{ fill: ballColor }} />
+        <circle cx={pos.x} cy={pos.y} r={radius} style={{ fill: ballColor }} />
       </svg>
     </AbsoluteFill>
   );

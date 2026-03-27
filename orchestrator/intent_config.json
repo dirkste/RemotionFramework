@@ -1,3 +1,7 @@
 {
-  "videoLengthSeconds": 15
+  "videoLengthSeconds": 15,
+  "colorDescription": "deep purple",
+  "ballSize": 300,
+  "backgroundColor": "white",
+  "horizontalDrift": 0.3
 }

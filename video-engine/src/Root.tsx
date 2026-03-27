@@ -15,6 +15,8 @@ export const RemotionRoot: React.FC = () => {
       defaultProps={{
         ballColor: "#FF0000",
         ballSize: 100,
+        backgroundColor: "#FFFFFF",
+        horizontalDrift: 0,
         durationInFrames: 90,
       }}
       calculateMetadata={({ props }) => ({
