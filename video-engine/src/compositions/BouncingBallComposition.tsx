@@ -5,6 +5,7 @@ import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 type LiveProps = Pick<BouncingBallProps, "ballColor" | "ballSize">;
 
 const POLL_INTERVAL_MS = 2000;
+const PROPS_URL = "/public/props.json";
 
 export const BouncingBallComposition: React.FC<BouncingBallProps> = (schemaProps) => {
   const [liveProps, setLiveProps] = useState<LiveProps>({
@@ -15,23 +16,26 @@ export const BouncingBallComposition: React.FC<BouncingBallProps> = (schemaProps
   useEffect(() => {
     const fetchProps = async () => {
       try {
-        // Cache-bust so the browser always fetches the latest file write.
-        const res = await fetch(`/public/props.json?t=${Date.now()}`);
-        if (!res.ok) return;
+        const res = await fetch(`${PROPS_URL}?t=${Date.now()}`);
+        if (!res.ok) {
+          console.warn(`[BouncingBall] props.json fetch failed: HTTP ${res.status} ${res.url}`);
+          return;
+        }
         const data = await res.json();
+        console.log("[BouncingBall] props loaded:", data);
         setLiveProps({
           ballColor: data.ballColor ?? schemaProps.ballColor,
           ballSize: data.ballSize ?? schemaProps.ballSize,
         });
-      } catch {
-        // Keep current liveProps on network/parse error.
+      } catch (err) {
+        console.error("[BouncingBall] props.json fetch error:", err);
       }
     };
 
     fetchProps();
     const id = setInterval(fetchProps, POLL_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [schemaProps.ballColor, schemaProps.ballSize]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — intentionally runs once on mount
 
   // durationInFrames is intentionally not hot-reloaded here:
   // Remotion's calculateMetadata (and therefore the timeline length) is set
