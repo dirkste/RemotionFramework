@@ -21,7 +21,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
   // Precompute the full trajectory so frames can be rendered out of order.
   // Remotion renders frames independently — stateful/iterative simulation breaks.
   const trajectory = useMemo(() => {
-    const positions: { x: number; y: number; vy: number }[] = [];
+    const positions: { x: number; y: number; vy: number; vx: number }[] = [];
     let y = radius;
     let vy = 0;
     let x = width / 2;
@@ -49,7 +49,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
         vx = -Math.abs(vx);
       }
 
-      positions.push({ x, y, vy });
+      positions.push({ x, y, vy, vx });
     }
     return positions;
   }, [radius, durationInFrames, horizontalDrift, width]);
