@@ -1,5 +1,5 @@
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import type { BouncingBallProps } from "../schemas/BouncingBallSchema";
 
 // Physics constants — hard-coded to guarantee a "Perfect Bounce"
@@ -21,7 +21,7 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
   // Precompute the full trajectory so frames can be rendered out of order.
   // Remotion renders frames independently — stateful/iterative simulation breaks.
   const trajectory = useMemo(() => {
-    const positions: { x: number; y: number }[] = [];
+    const positions: { x: number; y: number; vy: number }[] = [];
     let y = radius;
     let vy = 0;
     let x = width / 2;
@@ -49,12 +49,19 @@ export const BouncingBall: React.FC<BouncingBallProps> = ({
         vx = -Math.abs(vx);
       }
 
-      positions.push({ x, y });
+      positions.push({ x, y, vy });
     }
     return positions;
   }, [radius, durationInFrames, horizontalDrift, width]);
 
   const pos = trajectory[frame] ?? trajectory[durationInFrames - 1];
+
+  useEffect(() => {
+    const f = String(frame).padStart(3, "0");
+    console.log(
+      `[Frame ${f}]  x: ${pos.x.toFixed(1).padStart(7)}  y: ${pos.y.toFixed(1).padStart(7)}  vy: ${pos.vy.toFixed(2).padStart(7)}`
+    );
+  }, [frame, pos]);
 
   return (
     <AbsoluteFill style={{ backgroundColor }}>
